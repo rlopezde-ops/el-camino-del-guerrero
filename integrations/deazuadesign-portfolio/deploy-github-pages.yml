@@ -1,8 +1,10 @@
-# Save as: deazuadesign-portfolio/.github/workflows/deploy-github-pages.yml
+# workflow-id: portfolio-spanish-pages-v3
 #
-# Uses `git clone` instead of actions/checkout for the Spanish repo so public
-# repos work even when the GitHub API token cannot read cross-repo metadata.
-# Private Spanish repo: set secret SPANISH_REPO_TOKEN (fine-grained PAT, read).
+# BEFORE THIS WORKS: deazuadesign-portfolio → Settings → Pages → Build and deployment
+# → Source MUST be "GitHub Actions" (not "Deploy from a branch"). Otherwise
+# configure-pages fails with exit code 1.
+#
+# Public Spanish repo: no secret needed. Private: SPANISH_REPO_TOKEN (read access).
 name: Deploy GitHub Pages
 
 on:
@@ -29,35 +31,44 @@ jobs:
       - name: Checkout portfolio
         uses: actions/checkout@v4
 
-      - name: Fetch Spanish app
+      - name: Fetch Spanish app (git clone — avoids API "Not Found")
         env:
           PAT: ${{ secrets.SPANISH_REPO_TOKEN }}
         run: |
+          set -euxo pipefail
           rm -rf spanish-app
-          if [ -n "$PAT" ]; then
-            git clone --depth 1 "https://x-access-token:${PAT}@github.com/rlopezde-ops/el-camino-del-guerrero.git" spanish-app
+          # Trim secret: a blank/whitespace-only secret would break x-access-token URLs
+          TRIMMED="$(printf '%s' "$PAT" | tr -d ' \t\r\n')"
+          if [ -n "$TRIMMED" ]; then
+            git clone --depth 1 "https://x-access-token:${TRIMMED}@github.com/rlopezde-ops/el-camino-del-guerrero.git" spanish-app
           else
             git clone --depth 1 https://github.com/rlopezde-ops/el-camino-del-guerrero.git spanish-app
           fi
           test -f spanish-app/package.json
+          test -f spanish-app/package-lock.json
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: npm
           cache-dependency-path: spanish-app/package-lock.json
 
-      - name: Build Spanish app (subpath /deazuadesign-portfolio/apps/spanish/)
+      - name: Install & build Spanish app
         working-directory: spanish-app
         env:
           VITE_PAGES_BASE: /deazuadesign-portfolio/apps/spanish/
         run: |
+          set -euxo pipefail
+          node --version
+          npm --version
           npm ci
           npm run build
           cp dist/index.html dist/404.html
+          test -f dist/index.html
 
-      - name: Assemble site (portfolio static + apps/spanish)
+      - name: Assemble site (portfolio + apps/spanish)
         run: |
+          set -euxo pipefail
           mkdir -p _site
           rsync -a \
             --exclude='.git' \
@@ -68,6 +79,9 @@ jobs:
             ./ _site/
           mkdir -p _site/apps/spanish
           cp -r spanish-app/dist/. _site/apps/spanish/
+          : > _site/.nojekyll
+          test -f _site/index.html
+          test -f _site/apps/spanish/index.html
 
       - uses: actions/configure-pages@v5
 

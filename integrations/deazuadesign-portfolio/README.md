@@ -15,7 +15,8 @@ Live URL after setup:
       deazuadesign-portfolio/.github/workflows/deploy-github-pages.yml
    ```
 
-2. In **deazuadesign-portfolio** on GitHub: **Settings → Pages → Build and deployment → Source** → choose **GitHub Actions** (not “Deploy from a branch”).
+2. In **deazuadesign-portfolio** on GitHub: **Settings → Pages → Build and deployment → Source** → choose **GitHub Actions** (not “Deploy from a branch”).  
+   **If you skip this, the workflow fails** at `configure-pages` with **exit code 1** and almost no helpful text.
 
 3. Push the new workflow to `main` on `deazuadesign-portfolio`. The workflow will build the Spanish app from `rlopezde-ops/el-camino-del-guerrero` and publish it under `apps/spanish/`.
 
