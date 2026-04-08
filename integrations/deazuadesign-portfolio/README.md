@@ -1,6 +1,10 @@
 # Host Spanish app under the portfolio (`/apps/spanish`)
 
-Live URL after setup:
+Live URL after setup (custom domain):
+
+**https://deazuadesign.com/apps/spanish/**
+
+Alternate (GitHub Pages default URL, often redirects to the domain above):
 
 **https://rlopezde-ops.github.io/deazuadesign-portfolio/apps/spanish/**
 

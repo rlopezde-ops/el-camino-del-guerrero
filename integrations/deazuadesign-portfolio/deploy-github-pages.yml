@@ -1,4 +1,6 @@
-# workflow-id: portfolio-spanish-pages-v3
+# workflow-id: portfolio-spanish-pages-v4
+# Vite base = /apps/spanish/ (correct for custom domain deazuadesign.com at site root).
+# The /deazuadesign-portfolio/ segment only applies to *.github.io/deazuadesign-portfolio/ URLs.
 #
 # BEFORE THIS WORKS: deazuadesign-portfolio → Settings → Pages → Build and deployment
 # → Source MUST be "GitHub Actions" (not "Deploy from a branch"). Otherwise
@@ -56,7 +58,7 @@ jobs:
       - name: Install & build Spanish app
         working-directory: spanish-app
         env:
-          VITE_PAGES_BASE: /deazuadesign-portfolio/apps/spanish/
+          VITE_PAGES_BASE: /apps/spanish/
         run: |
           set -euxo pipefail
           node --version
