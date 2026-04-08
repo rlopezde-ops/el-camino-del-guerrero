@@ -1,4 +1,8 @@
 # Save as: deazuadesign-portfolio/.github/workflows/deploy-github-pages.yml
+#
+# If el-camino-del-guerrero is PRIVATE: add repo secret SPANISH_REPO_TOKEN on THIS repo
+# (fine-grained PAT, Contents: Read on that repo only). Default GITHUB_TOKEN cannot read
+# other private repos — checkout returns "Not Found".
 name: Deploy GitHub Pages
 
 on:
@@ -30,7 +34,8 @@ jobs:
         with:
           repository: rlopezde-ops/el-camino-del-guerrero
           path: spanish-app
-          # Optional: set SPANISH_REPO_TOKEN on deazuadesign-portfolio if the Spanish repo is private
+          # Private Spanish repo: add secret SPANISH_REPO_TOKEN (PAT with read access).
+          # Public repo: leave secret unset — github.token works.
           token: ${{ secrets.SPANISH_REPO_TOKEN || github.token }}
 
       - uses: actions/setup-node@v4

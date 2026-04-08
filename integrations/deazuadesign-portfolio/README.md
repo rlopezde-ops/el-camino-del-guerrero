@@ -19,7 +19,9 @@ Live URL after setup:
 
 3. Push the new workflow to `main` on `deazuadesign-portfolio`. The workflow will build the Spanish app from `rlopezde-ops/el-camino-del-guerrero` and publish it under `apps/spanish/`.
 
-4. If `el-camino-del-guerrero` is **private**, add a repository secret on `deazuadesign-portfolio` named `SPANISH_REPO_TOKEN` (fine-grained PAT with read access to that repo). The workflow uses it automatically when present.
+4. **If the deploy fails with “Not Found”** when checking out the Spanish repo: your Spanish repo is almost certainly **private**. GitHub hides private repos from the default token, so it looks like “not found.”  
+   - **Fix A (easy):** On `el-camino-del-guerrero` → **Settings** → **General** → scroll to **Danger zone** → **Change repository visibility** → **Public** (only if you’re okay with that).  
+   - **Fix B (keep private):** On `deazuadesign-portfolio` → **Settings** → **Secrets and variables** → **Actions** → **New repository secret** → name **`SPANISH_REPO_TOKEN`**, value = a [fine-grained PAT](https://github.com/settings/personal-access-tokens) with **Contents: Read** on `el-camino-del-guerrero` only. Then re-run the workflow (**Actions** → failed run → **Re-run all jobs**).
 
 ## Optional: turn off the separate Spanish-only Pages site
 
