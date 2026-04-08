@@ -8,5 +8,5 @@ export function accuracyToStars(accuracy: number): 0 | 1 | 2 | 3 {
 }
 
 export function starsLabel(stars: number): string {
-  return '★'.repeat(stars) + '☆'.repeat(3 - stars);
+  return `${stars} of 3 stars`;
 }

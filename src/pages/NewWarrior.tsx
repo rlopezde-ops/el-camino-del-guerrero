@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
-import WarriorAvatar, { SKIN_TONES, HAIR_COLORS } from '../components/ui/WarriorAvatar';
+import WarriorAvatar, { SKIN_TONES, HAIR_COLORS, WARRIOR_FACE_EXPRESSIONS } from '../components/ui/WarriorAvatar';
 import DojoButton from '../components/ui/DojoButton';
 import { getAgeGroup, type AgeGroup } from '../types';
 
@@ -55,13 +55,13 @@ export default function NewWarrior() {
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-dojo-dark via-dojo-navy to-dojo-dark overflow-auto">
-      <div className="flex items-center px-4 pt-6 pb-2">
-        <DojoButton variant="ghost" size="sm" onClick={() => navigate('/')}>
+      <div className="flex items-center px-4 md:px-6 pt-6 pb-3">
+        <DojoButton variant="ghost" size="md" onClick={() => navigate('/')}>
           ← Back
         </DojoButton>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-10">
+      <div className="flex-1 flex flex-col items-center justify-center px-5 md:px-8 pb-12">
         <AnimatePresence mode="wait">
           {/* Step 1: Name */}
           {step === 'name' && (
@@ -71,9 +71,9 @@ export default function NewWarrior() {
               initial="enter"
               animate="center"
               exit="exit"
-              className="w-full max-w-sm flex flex-col items-center gap-6"
+              className="w-full max-w-md flex flex-col items-center gap-8"
             >
-              <h2 className="font-baloo text-3xl font-extrabold text-amber-400 text-center">
+              <h2 className="font-baloo text-4xl md:text-5xl font-extrabold text-amber-400 text-center px-2">
                 What is your warrior name?
               </h2>
               <input
@@ -82,7 +82,7 @@ export default function NewWarrior() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your name..."
-                className="w-full px-5 py-3 rounded-2xl bg-white/10 border border-white/20 text-white font-poppins text-lg text-center focus:outline-none focus:border-amber-400 placeholder:text-white/30"
+                className="w-full px-6 py-4 rounded-2xl md:rounded-3xl bg-white/10 border-2 border-white/20 text-white font-poppins text-xl md:text-2xl text-center focus:outline-none focus:border-amber-400 placeholder:text-white/30 min-h-[56px]"
                 autoFocus
               />
               <DojoButton
@@ -104,16 +104,16 @@ export default function NewWarrior() {
               initial="enter"
               animate="center"
               exit="exit"
-              className="w-full max-w-sm flex flex-col items-center gap-6"
+              className="w-full max-w-md flex flex-col items-center gap-8"
             >
-              <h2 className="font-baloo text-3xl font-extrabold text-amber-400 text-center">
+              <h2 className="font-baloo text-4xl md:text-5xl font-extrabold text-amber-400 text-center px-2">
                 How old are you?
               </h2>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-5 gap-3">
                 {[10, 11, 12, 13, 14, 15, 16, 17, 18].map((a) => (
                   <motion.button
                     key={a}
-                    className={`w-14 h-14 rounded-xl font-baloo font-bold text-lg cursor-pointer transition-colors ${
+                    className={`w-16 h-16 md:w-[4.5rem] md:h-[4.5rem] rounded-xl md:rounded-2xl font-baloo font-bold text-xl md:text-2xl cursor-pointer transition-colors ${
                       age === a ? 'bg-amber-400 text-dojo-dark' : 'bg-white/10 text-white hover:bg-white/20'
                     }`}
                     whileTap={{ scale: 0.9 }}
@@ -123,7 +123,7 @@ export default function NewWarrior() {
                   </motion.button>
                 ))}
                 <motion.button
-                  className={`w-14 h-14 rounded-xl font-baloo font-bold text-sm cursor-pointer transition-colors ${
+                  className={`w-16 h-16 md:w-[4.5rem] md:h-[4.5rem] rounded-xl md:rounded-2xl font-baloo font-bold text-base md:text-lg cursor-pointer transition-colors ${
                     age > 18 ? 'bg-amber-400 text-dojo-dark' : 'bg-white/10 text-white hover:bg-white/20'
                   }`}
                   whileTap={{ scale: 0.9 }}
@@ -132,10 +132,10 @@ export default function NewWarrior() {
                   Adult
                 </motion.button>
               </div>
-              <p className="font-poppins text-sm text-white/40">
+              <p className="font-poppins text-base md:text-lg text-white/50 text-center px-2">
                 {getAgeLabel(getAgeGroup(age))}
               </p>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap justify-center gap-4">
                 <DojoButton variant="ghost" size="md" onClick={() => setStep('name')}>← Back</DojoButton>
                 <DojoButton size="lg" onClick={() => setStep('avatar')}>Continue →</DojoButton>
               </div>
@@ -150,22 +150,22 @@ export default function NewWarrior() {
               initial="enter"
               animate="center"
               exit="exit"
-              className="w-full max-w-sm flex flex-col items-center gap-5"
+              className="w-full max-w-md flex flex-col items-center gap-6"
             >
-              <h2 className="font-baloo text-3xl font-extrabold text-amber-400 text-center">
+              <h2 className="font-baloo text-4xl md:text-5xl font-extrabold text-amber-400 text-center px-2">
                 Build your warrior!
               </h2>
 
-              <WarriorAvatar head={head} hair={hair} skinTone={skinTone} size={100} />
+              <WarriorAvatar head={head} hair={hair} skinTone={skinTone} size={120} />
 
               {/* Skin tone */}
               <div className="w-full">
-                <p className="font-poppins text-sm text-white/50 mb-2">Skin tone</p>
-                <div className="flex gap-2 justify-center">
+                <p className="font-poppins text-base md:text-lg text-white/55 mb-3 text-center">Skin tone</p>
+                <div className="flex gap-3 justify-center flex-wrap">
                   {SKIN_TONES.map((color, i) => (
                     <motion.button
                       key={i}
-                      className={`w-9 h-9 rounded-full cursor-pointer border-2 ${skinTone === i ? 'border-amber-400' : 'border-transparent'}`}
+                      className={`w-11 h-11 md:w-12 md:h-12 rounded-full cursor-pointer border-[3px] ${skinTone === i ? 'border-amber-400' : 'border-transparent'}`}
                       style={{ backgroundColor: color }}
                       whileTap={{ scale: 0.85 }}
                       onClick={() => setSkinTone(i)}
@@ -176,12 +176,12 @@ export default function NewWarrior() {
 
               {/* Hair */}
               <div className="w-full">
-                <p className="font-poppins text-sm text-white/50 mb-2">Hair</p>
-                <div className="flex gap-2 justify-center">
+                <p className="font-poppins text-base md:text-lg text-white/55 mb-3 text-center">Hair</p>
+                <div className="flex gap-3 justify-center flex-wrap">
                   {HAIR_COLORS.map((color, i) => (
                     <motion.button
                       key={i}
-                      className={`w-9 h-9 rounded-full cursor-pointer border-2 ${hair === i ? 'border-amber-400' : 'border-transparent'}`}
+                      className={`w-11 h-11 md:w-12 md:h-12 rounded-full cursor-pointer border-[3px] ${hair === i ? 'border-amber-400' : 'border-transparent'}`}
                       style={{ backgroundColor: color }}
                       whileTap={{ scale: 0.85 }}
                       onClick={() => setHair(i)}
@@ -192,12 +192,12 @@ export default function NewWarrior() {
 
               {/* Face */}
               <div className="w-full">
-                <p className="font-poppins text-sm text-white/50 mb-2">Face</p>
-                <div className="flex gap-2 justify-center">
-                  {['◠‿◠', '◕‿◕', '•‿•', '◉‿◉', '◔‿◔', '⊙‿⊙'].map((face, i) => (
+                <p className="font-poppins text-base md:text-lg text-white/55 mb-3 text-center">Face</p>
+                <div className="flex gap-3 justify-center flex-wrap">
+                  {WARRIOR_FACE_EXPRESSIONS.map((face, i) => (
                     <motion.button
                       key={i}
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg cursor-pointer ${
+                      className={`w-14 h-14 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-2xl cursor-pointer ${
                         head === i ? 'bg-amber-400/20 border border-amber-400' : 'bg-white/10'
                       }`}
                       whileTap={{ scale: 0.85 }}
@@ -209,10 +209,10 @@ export default function NewWarrior() {
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-2">
-                <DojoButton variant="ghost" size="md" onClick={() => setStep('age')}>← Back</DojoButton>
+              <div className="flex flex-wrap justify-center gap-4 mt-4">
+                <DojoButton variant="ghost" size="lg" onClick={() => setStep('age')}>← Back</DojoButton>
                 <DojoButton size="lg" onClick={handleFinish}>
-                  Begin Training! 🥋
+                  Begin Training!
                 </DojoButton>
               </div>
             </motion.div>
@@ -225,9 +225,9 @@ export default function NewWarrior() {
 
 function getAgeLabel(group: AgeGroup): string {
   switch (group) {
-    case 'junior': return '🐉 Junior Warrior (ages 10-12)';
-    case 'warrior': return '⚔️ Warrior (ages 13-15)';
-    case 'elite': return '🏆 Elite Warrior (ages 16-18)';
-    case 'master': return '🥋 Master Warrior (adult)';
+    case 'junior': return 'Junior Warrior (ages 10-12)';
+    case 'warrior': return 'Warrior (ages 13-15)';
+    case 'elite': return 'Elite Warrior (ages 16-18)';
+    case 'master': return 'Master Warrior (adult)';
   }
 }

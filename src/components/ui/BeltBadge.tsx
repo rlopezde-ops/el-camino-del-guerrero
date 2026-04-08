@@ -21,9 +21,9 @@ export default function BeltBadge({
   const danCount = isBlack ? parseInt(belt.split('-')[1]) : 0;
 
   const sizes = {
-    sm: { width: 40, height: 12, fontSize: '0.6rem' },
-    md: { width: 64, height: 18, fontSize: '0.75rem' },
-    lg: { width: 96, height: 24, fontSize: '0.875rem' },
+    sm: { width: 52, height: 16, fontSize: '0.7rem' },
+    md: { width: 80, height: 22, fontSize: '0.85rem' },
+    lg: { width: 112, height: 30, fontSize: '1rem' },
   };
 
   const s = sizes[size];

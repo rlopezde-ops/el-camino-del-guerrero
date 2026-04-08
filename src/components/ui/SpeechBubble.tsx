@@ -35,16 +35,16 @@ export default function SpeechBubble({
 
   return (
     <motion.div
-      className={`relative bg-white/90 backdrop-blur-sm text-dojo-dark rounded-2xl px-5 py-3 max-w-sm ${className}`}
+      className={`relative bg-white/90 backdrop-blur-sm text-dojo-dark rounded-2xl px-6 py-4 max-w-md md:max-w-lg ${className}`}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
-      <p className="font-poppins text-base leading-relaxed">
+      <p className="font-poppins text-lg md:text-xl leading-relaxed">
         {displayed}
         {!done && (
           <motion.span
-            className="inline-block w-0.5 h-4 bg-dojo-dark ml-0.5 align-middle"
+            className="inline-block w-0.5 h-5 md:h-6 bg-dojo-dark ml-0.5 align-middle"
             animate={{ opacity: [1, 0, 1] }}
             transition={{ repeat: Infinity, duration: 0.8 }}
           />

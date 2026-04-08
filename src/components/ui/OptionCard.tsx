@@ -35,7 +35,7 @@ export default function OptionCard({
 
   return (
     <motion.button
-      className={`w-full p-4 rounded-2xl border-2 text-left transition-colors cursor-pointer ${borderColor} ${bgColor} ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+      className={`w-full p-5 md:p-6 rounded-2xl md:rounded-3xl border-[3px] text-left transition-colors cursor-pointer ${borderColor} ${bgColor} ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
       whileTap={!disabled ? { scale: 0.97 } : undefined}
       animate={correct === false ? { x: [0, -4, 4, -4, 4, 0] } : undefined}
       transition={correct === false ? { duration: 0.4 } : { type: 'spring', stiffness: 400 }}
@@ -43,9 +43,9 @@ export default function OptionCard({
       disabled={disabled}
       style={selected ? { borderColor: beltColor } : undefined}
     >
-      <span className="font-baloo font-bold text-lg text-white">{text}</span>
+      <span className="font-baloo font-bold text-xl md:text-2xl text-white leading-snug">{text}</span>
       {subtext && (
-        <span className="block font-poppins text-sm text-white/50 mt-0.5">{subtext}</span>
+        <span className="block font-poppins text-base md:text-lg text-white/50 mt-1">{subtext}</span>
       )}
     </motion.button>
   );

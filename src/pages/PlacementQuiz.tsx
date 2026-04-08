@@ -8,9 +8,10 @@ import BeltBadge from '../components/ui/BeltBadge';
 import DojoButton from '../components/ui/DojoButton';
 import OptionCard from '../components/ui/OptionCard';
 import VoxelConfetti from '../components/ui/VoxelConfetti';
-import { BELT_DISPLAY_NAMES, BELT_CSS_COLORS, getBeltIndex, type BeltColor } from '../types';
+import { BELT_DISPLAY_NAMES, BELT_CSS_COLORS, type BeltColor } from '../types';
 import { seedTechniquesAsKnown } from '../lib/spacedRepetition';
-import { getTechniquesByBelt } from '../data/curriculum';
+import { getTechniquesByBelt, getDojo1Units } from '../data/curriculum';
+import { db } from '../db';
 
 interface TrialQuestion {
   prompt: string;
@@ -49,16 +50,29 @@ const TRIAL_DEFINITIONS: TrialDef[] = [
     ],
   },
   {
-    belt: 'orange',
-    label: 'Yellow-Orange Belt Trial',
+    belt: 'yellow',
+    label: 'Yellow Belt Trial',
     pick: 3,
     pool: [
       { prompt: 'What color is "azul"?', correctAnswer: 'Blue', options: ['Red', 'Blue', 'Green', 'Yellow'] },
-      { prompt: '"Hermana" means...', correctAnswer: 'Sister', options: ['Brother', 'Sister', 'Mom', 'Dad'] },
-      { prompt: '"La cabeza" is...', correctAnswer: 'The head', options: ['The head', 'The hand', 'The foot', 'The eye'] },
       { prompt: '"Simpático" best means...', correctAnswer: 'Nice / friendly (person)', options: ['Nice / friendly (person)', 'Pretty', 'Tall', 'Angry'] },
+      { prompt: '"Hermana" means...', correctAnswer: 'Sister', options: ['Brother', 'Sister', 'Mom', 'Dad'] },
       { prompt: 'What is "tío"?', correctAnswer: 'Uncle', options: ['Aunt', 'Uncle', 'Cousin', 'Grandfather'] },
       { prompt: 'What color is "morado"?', correctAnswer: 'Purple', options: ['Pink', 'Purple', 'Gray', 'Brown'] },
+      { prompt: '"Grande" means...', correctAnswer: 'Big', options: ['Small', 'Big', 'Pretty', 'Old'] },
+    ],
+  },
+  {
+    belt: 'orange',
+    label: 'Orange Belt Trial',
+    pick: 3,
+    pool: [
+      { prompt: '"La cabeza" is...', correctAnswer: 'The head', options: ['The head', 'The hand', 'The foot', 'The eye'] },
+      { prompt: '"El perro es grande" means...', correctAnswer: 'The dog is big', options: ['The dog is big', 'The cat is small', 'The bird is pretty', 'The fish is blue'] },
+      { prompt: 'What is "brazo"?', correctAnswer: 'Arm', options: ['Leg', 'Arm', 'Hand', 'Foot'] },
+      { prompt: 'What is "conejo"?', correctAnswer: 'Rabbit', options: ['Cat', 'Rabbit', 'Bird', 'Fish'] },
+      { prompt: '"Me duele la cabeza" means...', correctAnswer: 'My head hurts', options: ['My head hurts', 'I like heads', 'The head is big', 'I have a head'] },
+      { prompt: 'What is "vaca"?', correctAnswer: 'Cow', options: ['Dog', 'Cow', 'Horse', 'Pig'] },
     ],
   },
   {
@@ -68,35 +82,9 @@ const TRIAL_DEFINITIONS: TrialDef[] = [
     pool: [
       { prompt: '"Me gusta comer manzanas" means...', correctAnswer: 'I like to eat apples', options: ['I like to eat apples', 'I want to eat bread', 'I have an apple', 'The apple is red'] },
       { prompt: 'What is "un libro"?', correctAnswer: 'A book', options: ['A book', 'A pencil', 'A door', 'A class'] },
-      { prompt: '"El perro es grande" means...', correctAnswer: 'The dog is big', options: ['The dog is big', 'The cat is small', 'The bird is pretty', 'The fish is blue'] },
       { prompt: 'What is "queso"?', correctAnswer: 'Cheese', options: ['Cheese', 'Rice', 'Soup', 'Juice'] },
       { prompt: '"No me gusta la leche" means...', correctAnswer: "I don't like milk", options: ["I don't like milk", 'I like milk', 'The milk is white', 'I want milk'] },
-    ],
-  },
-  {
-    belt: 'red',
-    label: 'Blue-Red Belt Trial',
-    pick: 4,
-    pool: [
-      { prompt: '"Yo voy al parque" means...', correctAnswer: 'I go to the park', options: ['I go to the park', 'I went to the park', 'I will go to the park', 'I am at the park'] },
-      { prompt: 'What does "Llueve" mean?', correctAnswer: 'It rains', options: ['It\'s hot', 'It rains', 'It\'s cold', 'It snows'] },
-      { prompt: '"Son las tres" means...', correctAnswer: 'It is 3 o\'clock', options: ['It is 3 o\'clock', 'There are 3', 'I have 3', 'It\'s March'] },
-      { prompt: '"¿Dónde está la tienda?" means...', correctAnswer: 'Where is the store?', options: ['Where is the store?', 'What is the store?', 'Is this the store?', 'I like the store'] },
-      { prompt: '"Quisiera agua, por favor" suggests...', correctAnswer: 'I would like water, please', options: ['I would like water, please', 'I hate water', 'Where is the water?', 'The water is cold'] },
-      { prompt: '"Hace calor" means...', correctAnswer: "It's hot (weather)", options: ["It's hot (weather)", 'I am hot', 'I like heat', 'It is winter'] },
-    ],
-  },
-  {
-    belt: 'black-1',
-    label: 'Black Belt Trial',
-    pick: 4,
-    pool: [
-      { prompt: '"Ayer yo fui al cine" means...', correctAnswer: 'Yesterday I went to the movies', options: ['Yesterday I went to the movies', 'Today I go to the movies', 'Tomorrow I will go to the movies', 'I like movies'] },
-      { prompt: '"Mañana voy a estudiar" means...', correctAnswer: 'Tomorrow I am going to study', options: ['Tomorrow I am going to study', 'Yesterday I studied', 'I study every day', 'I don\'t like studying'] },
-      { prompt: '"Creo que el bosque es hermoso" means...', correctAnswer: 'I think the forest is beautiful', options: ['I think the forest is beautiful', 'I went to the forest', 'The forest is big', 'I like forests'] },
-      { prompt: '"El año pasado viajé a México" means...', correctAnswer: 'Last year I traveled to Mexico', options: ['Last year I traveled to Mexico', 'I want to travel to Mexico', 'Mexico is beautiful', 'I live in Mexico'] },
-      { prompt: '"Si tuviera tiempo, viajaría" is closer to...', correctAnswer: 'If I had time, I would travel', options: ['If I had time, I would travel', 'I travel when I have time', 'I never travel', 'I traveled last year'] },
-      { prompt: '"Ojalá llueva" expresses...', correctAnswer: 'Hopefully it rains / I hope it rains', options: ['Hopefully it rains / I hope it rains', 'It is raining', 'It never rains', 'I hate rain'] },
+      { prompt: 'What is "mochila"?', correctAnswer: 'Backpack', options: ['Backpack', 'Book', 'School', 'Teacher'] },
     ],
   },
 ];
@@ -191,12 +179,23 @@ export default function PlacementQuiz() {
     setPhase('result');
     if (!activeProfile?.id) return;
 
-    const highestBelt = earnedBelts.length > 0
+    const highestBelt: BeltColor = earnedBelts.length > 0
       ? earnedBelts[earnedBelts.length - 1]
       : 'white';
 
-    const beltIdx = getBeltIndex(highestBelt);
-    const unitStart = beltIdx * 2 + (earnedBelts.length > 0 ? 3 : 1);
+    const BELT_UNIT_MAP: Record<string, number> = {
+      white: 3,
+      yellow: 5,
+      orange: 7,
+      green: 8,
+    };
+
+    const unitStart = earnedBelts.length > 0
+      ? BELT_UNIT_MAP[highestBelt] ?? 1
+      : 1;
+
+    const dojo1Belts: BeltColor[] = ['white', 'yellow', 'orange', 'green'];
+    const clampedBelt = dojo1Belts.includes(highestBelt) ? highestBelt : 'green';
 
     for (const belt of earnedBelts) {
       const techniques = getTechniquesByBelt(belt);
@@ -205,12 +204,31 @@ export default function PlacementQuiz() {
       }
     }
 
+    const pid = activeProfile.id;
+    const units = getDojo1Units();
+    for (const u of units) {
+      if (u.id < unitStart) {
+        await db.sessionResults.add({
+          profileId: pid,
+          unitId: u.id,
+          completedAt: new Date(),
+          kiEarned: 0,
+          coinsEarned: 0,
+          accuracy: 0.85,
+          exercisesCompleted: 10,
+          comboMax: 3,
+          newTechniquesLearned: u.techniques.length,
+          techniquesReviewed: 10,
+        });
+      }
+    }
+
     const updates = {
-      currentBelt: highestBelt,
+      currentBelt: clampedBelt,
       currentUnit: Math.min(unitStart, 8),
       currentStripe: 1,
       coins: totalCoins,
-      placementBelt: highestBelt,
+      placementBelt: clampedBelt,
       placementCompleted: true,
     };
 
@@ -232,15 +250,15 @@ export default function PlacementQuiz() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="text-6xl">🥋</div>
-            <h1 className="font-baloo text-3xl font-extrabold text-amber-400 text-center">
+            <div className="h-4 w-28 mx-auto rounded-full bg-amber-400/35" aria-hidden />
+            <h1 className="font-baloo text-4xl md:text-5xl font-extrabold text-amber-400 text-center px-2">
               La Prueba del Guerrero
             </h1>
             <SpeechBubble
               text="Welcome to the Dojo, warrior. Show me what you already know. Every belt you earn is one you've mastered. ¡Hajime!"
             />
             <DojoButton size="lg" onClick={() => setPhase('trial')}>
-              Begin Trial! ⚔️
+              Begin Trial!
             </DojoButton>
           </motion.div>
         )}
@@ -249,7 +267,7 @@ export default function PlacementQuiz() {
         {phase === 'trial' && currentQuestion && (
           <motion.div
             key={`trial-${trialIdx}-${questionIdx}`}
-            className="flex-1 flex flex-col px-6 pt-6"
+            className="flex-1 flex flex-col px-5 md:px-8 pt-6"
             initial={{ x: 30, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -30, opacity: 0 }}
@@ -262,20 +280,20 @@ export default function PlacementQuiz() {
                 className="hidden sm:flex"
               />
               <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-baloo text-lg font-bold" style={{ color: BELT_CSS_COLORS[currentTrial.belt] }}>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-baloo text-xl md:text-2xl font-bold" style={{ color: BELT_CSS_COLORS[currentTrial.belt] }}>
                     {currentTrial.label}
                   </span>
-                  <span className="font-pixel text-xs text-white/40">
+                  <span className="font-pixel text-sm md:text-base text-white/45">
                     {questionIdx + 1}/{currentTrial.questions.length}
                   </span>
                 </div>
 
-                <h2 className="font-baloo text-2xl font-extrabold text-white mb-6">
+                <h2 className="font-baloo text-3xl md:text-4xl font-extrabold text-white mb-6 leading-tight">
                   {currentQuestion.prompt}
                 </h2>
 
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
                   {currentQuestion.options.map((opt) => (
                     <OptionCard
                       key={opt}
@@ -316,10 +334,10 @@ export default function PlacementQuiz() {
             >
               <BeltBadge belt={currentTrial.belt} size="lg" showLabel />
             </motion.div>
-            <h2 className="font-baloo text-3xl font-extrabold text-center" style={{ color: BELT_CSS_COLORS[currentTrial.belt] }}>
+            <h2 className="font-baloo text-4xl md:text-5xl font-extrabold text-center px-2" style={{ color: BELT_CSS_COLORS[currentTrial.belt] }}>
               {BELT_DISPLAY_NAMES[currentTrial.belt]} Earned!
             </h2>
-            <p className="font-poppins text-white/60 text-center">
+            <p className="font-poppins text-lg md:text-xl text-white/65 text-center max-w-md px-2">
               {earnedBelts.length} belt{earnedBelts.length > 1 ? 's' : ''} earned! You've bypassed {earnedBelts.length * 2} stripes!
             </p>
             <DojoButton size="lg" onClick={nextTrialOrFinish}>
@@ -336,24 +354,24 @@ export default function PlacementQuiz() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="text-5xl">🏆</div>
-            <h1 className="font-baloo text-3xl font-extrabold text-amber-400 text-center">
+            <div className="h-4 w-32 mx-auto rounded-full bg-amber-400/35" aria-hidden />
+            <h1 className="font-baloo text-4xl md:text-5xl font-extrabold text-amber-400 text-center px-2">
               {earnedBelts.length === 0
                 ? 'Welcome to the Dojo!'
-                : earnedBelts.length >= 5
+                : earnedBelts.length >= 4
                   ? '¡Increíble, guerrero!'
                   : `${BELT_DISPLAY_NAMES[earnedBelts[earnedBelts.length - 1]]} Earned!`}
             </h1>
-            <p className="font-poppins text-white/60 text-center max-w-xs">
+            <p className="font-poppins text-lg md:text-xl text-white/65 text-center max-w-md px-4">
               {earnedBelts.length === 0
                 ? 'Every master was once a beginner. Sensei will guide you from the start.'
                 : `You conquered ${earnedBelts.length} trial${earnedBelts.length > 1 ? 's' : ''}! Your training begins at a higher rank.`}
             </p>
 
             <div className="flex gap-4 mt-2">
-              <div className="flex items-center gap-1 bg-white/10 px-3 py-2 rounded-xl">
-                <span>🪙</span>
-                <span className="font-pixel text-sm text-coin-gold">{totalCoins}</span>
+              <div className="flex items-center gap-2 bg-white/10 px-4 py-3 rounded-xl min-h-[52px]">
+                <span className="font-poppins text-xs font-semibold uppercase tracking-wide text-white/50">Coins</span>
+                <span className="font-pixel text-base md:text-lg text-coin-gold">{totalCoins}</span>
               </div>
             </div>
 

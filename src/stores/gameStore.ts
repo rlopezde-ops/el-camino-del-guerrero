@@ -53,10 +53,16 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   loadProfiles: async () => {
     const profiles = await db.profiles.toArray();
-    set({ profiles, isLoading: false });
+    const savedId = localStorage.getItem('activeProfileId');
+    let restored: WarriorProfile | null = null;
+    if (savedId) {
+      restored = profiles.find((p) => p.id === Number(savedId)) ?? null;
+    }
+    set({ profiles, isLoading: false, activeProfile: restored });
   },
 
   setActiveProfile: (profile) => {
+    if (profile.id != null) localStorage.setItem('activeProfileId', String(profile.id));
     set({ activeProfile: profile });
   },
 
@@ -81,9 +87,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     await db.profiles.delete(id);
     await db.techniqueProgress.where('profileId').equals(id).delete();
     await db.sessionResults.where('profileId').equals(id).delete();
+    const wasActive = get().activeProfile?.id === id;
+    if (wasActive) localStorage.removeItem('activeProfileId');
     set((s) => ({
       profiles: s.profiles.filter((p) => p.id !== id),
-      activeProfile: s.activeProfile?.id === id ? null : s.activeProfile,
+      activeProfile: wasActive ? null : s.activeProfile,
     }));
   },
 

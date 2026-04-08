@@ -5,24 +5,30 @@ interface VoxelConfettiProps {
   count?: number;
   color?: string;
   active?: boolean;
+  intensity?: 'normal' | 'high';
 }
 
-export default function VoxelConfetti({ count = 30, color, active = true }: VoxelConfettiProps) {
-  const particles = useMemo(() => {
-    const colors = color
-      ? [color]
-      : ['#fbbf24', '#ef4444', '#22c55e', '#3b82f6', '#a855f7', '#f97316'];
+export default function VoxelConfetti({ count, color, active = true, intensity = 'normal' }: VoxelConfettiProps) {
+  const effectiveCount = count ?? (intensity === 'high' ? 60 : 30);
+  const multiColor = intensity === 'high';
 
-    return Array.from({ length: count }, (_, i) => ({
+  const particles = useMemo(() => {
+    const colors = multiColor
+      ? ['#fbbf24', '#ef4444', '#22c55e', '#3b82f6', '#a855f7', '#f97316', '#ec4899', '#14b8a6']
+      : color
+        ? [color]
+        : ['#fbbf24', '#ef4444', '#22c55e', '#3b82f6', '#a855f7', '#f97316'];
+
+    return Array.from({ length: effectiveCount }, (_, i) => ({
       id: i,
-      x: Math.random() * 100,
+      x: multiColor ? Math.random() * 120 - 10 : Math.random() * 100,
       color: colors[i % colors.length],
-      size: 6 + Math.random() * 8,
-      delay: Math.random() * 0.5,
+      size: multiColor ? 8 + Math.random() * 10 : 6 + Math.random() * 8,
+      delay: Math.random() * (multiColor ? 0.8 : 0.5),
       duration: 1.5 + Math.random() * 1.5,
       rotation: Math.random() * 360,
     }));
-  }, [count, color]);
+  }, [effectiveCount, color, multiColor]);
 
   if (!active) return null;
 

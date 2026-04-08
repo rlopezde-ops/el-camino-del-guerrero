@@ -6,14 +6,14 @@ interface KiCounterProps {
   type: 'ki' | 'coins' | 'streak';
 }
 
-const icons: Record<string, { emoji: string; color: string }> = {
-  ki: { emoji: '⚡', color: '#38bdf8' },
-  coins: { emoji: '🪙', color: '#fbbf24' },
-  streak: { emoji: '🔥', color: '#f97316' },
+const icons: Record<string, { label: string; color: string }> = {
+  ki: { label: 'Ki', color: '#38bdf8' },
+  coins: { label: 'Coins', color: '#fbbf24' },
+  streak: { label: 'Streak', color: '#f97316' },
 };
 
 export default function KiCounter({ value, type }: KiCounterProps) {
-  const { emoji, color } = icons[type];
+  const { label, color } = icons[type];
   const motionVal = useMotionValue(0);
   const display = useTransform(motionVal, (v) => Math.round(v));
 
@@ -27,14 +27,19 @@ export default function KiCounter({ value, type }: KiCounterProps) {
 
   return (
     <motion.div
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-sm"
+      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm min-h-[44px]"
       animate={value > 0 ? { scale: [1, 1.12, 1] } : undefined}
       transition={{ duration: 0.3 }}
       key={value}
     >
-      <span className="text-lg">{emoji}</span>
+      <span
+        className="text-xs md:text-sm font-baloo font-bold uppercase tracking-wide shrink-0 w-14 text-center"
+        style={{ color }}
+      >
+        {label}
+      </span>
       <motion.span
-        className="font-pixel text-sm"
+        className="font-pixel text-base md:text-lg"
         style={{ color }}
       >
         {display}

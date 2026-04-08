@@ -30,34 +30,46 @@ export function listenForSpanish(timeoutMs = 5000): Promise<SpeechResult> {
 
     recognition.lang = 'es-MX';
     recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.maxAlternatives = 3;
     recognition.continuous = false;
 
+    let settled = false;
+
     const timeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
       try {
         recognition.stop();
       } catch {
         /* already stopped */
       }
-      reject(new Error('Speech recognition timed out'));
+      reject(new Error('timeout'));
     }, timeoutMs);
 
     recognition.onresult = (event: any) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timeout);
-      const result = event.results[0][0];
+      const best = event.results[0][0];
       resolve({
-        transcript: result.transcript.toLowerCase().trim(),
-        confidence: result.confidence,
+        transcript: best.transcript.toLowerCase().trim(),
+        confidence: best.confidence,
       });
     };
 
     recognition.onerror = (event: any) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timeout);
-      reject(new Error(`Speech recognition error: ${event.error}`));
+      reject(new Error(event.error ?? 'unknown'));
     };
 
     recognition.onend = () => {
       clearTimeout(timeout);
+      if (!settled) {
+        settled = true;
+        reject(new Error('no-speech'));
+      }
     };
 
     recognition.start();

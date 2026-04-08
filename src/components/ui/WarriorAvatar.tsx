@@ -15,6 +15,9 @@ const SKIN_TONES = ['#fde2b3', '#e8c99b', '#d4a574', '#c68642', '#8d5524', '#5c3
 const HAIR_COLORS = ['#2c1b0e', '#5a3825', '#8b4513', '#cd853f', '#daa520', '#c0392b', '#2c3e50', '#e74c3c'];
 const HAIR_STYLES = ['▄▄▄', '▓▓▓', '███', '▀▀▀', '░░░', '▒▒▒'];
 
+/** Face style indices for avatar + warrior editors (plain text, no emoji). */
+export const WARRIOR_FACE_EXPRESSIONS = ['(^.^)', '(>.<)', '(-_-)', '(o.o)', '(O.O)', '(^o^)'] as const;
+
 export default function WarriorAvatar({
   head = 0,
   hair = 0,
@@ -29,8 +32,7 @@ export default function WarriorAvatar({
   const beltColor = belt ? BELT_CSS_COLORS[belt] : undefined;
   const isBlack = belt?.startsWith('black');
 
-  const faceExpressions = ['◠‿◠', '◕‿◕', '•‿•', '◉‿◉', '◔‿◔', '⊙‿⊙'];
-  const face = faceExpressions[head % faceExpressions.length];
+  const face = WARRIOR_FACE_EXPRESSIONS[head % WARRIOR_FACE_EXPRESSIONS.length];
   const hairStyle = HAIR_STYLES[hair % HAIR_STYLES.length];
 
   return (

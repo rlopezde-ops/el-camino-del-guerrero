@@ -14,7 +14,7 @@ export default function ComboCounter({ combo }: ComboCounterProps) {
     <AnimatePresence mode="popLayout">
       <motion.div
         key={combo}
-        className="font-baloo font-extrabold text-2xl text-center drop-shadow-lg"
+        className="font-baloo font-extrabold text-3xl md:text-4xl text-center drop-shadow-lg"
         style={{ color }}
         initial={{ scale: 0, rotate: -10 }}
         animate={{ scale: 1, rotate: 0 }}
@@ -24,7 +24,7 @@ export default function ComboCounter({ combo }: ComboCounterProps) {
         {label}
         {combo >= 3 && (
           <motion.div
-            className="text-sm font-poppins font-normal text-white/60 mt-0.5"
+            className="text-base font-poppins font-normal text-white/60 mt-1"
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
           >

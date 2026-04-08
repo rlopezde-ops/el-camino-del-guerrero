@@ -27,6 +27,29 @@ function pickDistinct<T>(arr: T[], count: number, exclude?: T): T[] {
   return pool.slice(0, Math.min(count, pool.length));
 }
 
+/** Indefinite article for Unit 8 school nouns (gender matches curriculum vocabulary). */
+function schoolIndefiniteArticle(techId: string): 'un' | 'una' {
+  const map: Record<string, 'un' | 'una'> = {
+    libro: 'un',
+    lapiz: 'un',
+    escuela: 'una',
+    maestro: 'un',
+    maestra: 'una',
+    clase: 'una',
+    puerta: 'una',
+    ventana: 'una',
+    mesa: 'una',
+    silla: 'una',
+    pizarra: 'una',
+    mochila: 'una',
+    cuaderno: 'un',
+    tarea: 'una',
+    examen: 'un',
+    recreo: 'un',
+  };
+  return map[techId] ?? 'un';
+}
+
 /** Techniques from all units with id <= maxUnitId (same dojo). */
 export function getTechniquesUpToUnit(allUnits: UnitData[], maxUnitId: number): Technique[] {
   return allUnits.filter((u) => u.id <= maxUnitId).flatMap((u) => u.techniques);
@@ -89,8 +112,9 @@ function blockForTech(tech: Technique): { prompt: string; correctAnswer: string 
     };
   }
   if (category === 'school') {
+    const art = schoolIndefiniteArticle(tech.id);
     return {
-      prompt: `Necesito un ______.`,
+      prompt: `Necesito ${art} ______.`,
       correctAnswer: spanish,
     };
   }
@@ -106,38 +130,117 @@ function blockForTech(tech: Technique): { prompt: string; correctAnswer: string 
   };
 }
 
+function kataEntry(tokens: string[]): { spanish: string; words: string[] } {
+  const parts = expandKataTokens(tokens);
+  return { spanish: parts.join(' '), words: shuffle(parts) };
+}
+
+/** Definite article + gustar pattern for Unit 7 food items (incl. plural frijoles). */
+function foodGustaKataEntries(tech: Technique): Array<{ spanish: string; words: string[] }> {
+  const id = tech.id;
+  if (id === 'frijoles') {
+    return [
+      kataEntry(['Me', 'gustan', 'los', tech.spanish]),
+      kataEntry(['No', 'me', 'gustan', 'los', tech.spanish]),
+    ];
+  }
+  const article: Record<string, 'el' | 'la'> = {
+    manzana: 'la',
+    agua: 'el',
+    leche: 'la',
+    pan: 'el',
+    pollo: 'el',
+    arroz: 'el',
+    huevo: 'el',
+    queso: 'el',
+    fruta: 'la',
+    jugo: 'el',
+    cafe: 'el',
+    carne: 'la',
+    ensalada: 'la',
+    sopa: 'la',
+  };
+  const art = article[id];
+  if (!art) return [];
+  return [
+    kataEntry(['Me', 'gusta', art, tech.spanish]),
+    kataEntry(['No', 'me', 'gusta', art, tech.spanish]),
+  ];
+}
+
 function buildKataPool(unit: UnitData): Array<{ spanish: string; words: string[] }> {
   const pool: Array<{ spanish: string; words: string[] }> = [];
+  const adjectives = ['grande', 'pequeño', 'bonito'];
+  const subjects = ['El gato', 'La casa', 'El perro'];
+
   for (const tech of unit.techniques) {
-    if (tech.category === 'family') {
-      const parts = expandKataTokens(['Mi', tech.spanish, 'es', 'grande']);
-      pool.push({
-        spanish: parts.join(' '),
-        words: shuffle(parts),
-      });
+    const cat = tech.category;
+
+    if (cat === 'family') {
+      pool.push(kataEntry(['Mi', tech.spanish, 'es', pick(adjectives)]));
+      pool.push(kataEntry(['Mi', tech.spanish, 'es', 'simpático']));
     }
-    if (tech.category === 'animals') {
-      const parts = expandKataTokens(['El', tech.spanish, 'es', 'grande']);
-      pool.push({
-        spanish: parts.join(' '),
-        words: shuffle(parts),
-      });
+
+    if (cat === 'animals') {
+      pool.push(kataEntry(['El', tech.spanish, 'es', pick(adjectives)]));
+      pool.push(kataEntry(['El', tech.spanish, 'es', 'bonito']));
     }
-    if (tech.category === 'food') {
-      const parts = expandKataTokens(['Me', 'gusta', 'el', tech.spanish]);
-      pool.push({
-        spanish: parts.join(' '),
-        words: shuffle(parts),
-      });
+
+    if (cat === 'food') {
+      for (const k of foodGustaKataEntries(tech)) {
+        pool.push(k);
+      }
     }
-    if (tech.category === 'colors' || tech.category === 'descriptions') {
-      const parts = expandKataTokens(['La', 'casa', 'es', tech.spanish]);
-      pool.push({
-        spanish: parts.join(' '),
-        words: shuffle(parts),
-      });
+
+    if (cat === 'colors') {
+      const subj = pick(subjects).split(' ');
+      pool.push(kataEntry([...subj, 'es', tech.spanish]));
+      pool.push(kataEntry(['La', 'casa', 'es', tech.spanish]));
     }
-    if (tech.category === 'greetings' || tech.category === 'manners') {
+
+    if (cat === 'descriptions') {
+      pool.push(kataEntry(['El', 'gato', 'es', tech.spanish]));
+      pool.push(kataEntry(['La', 'casa', 'es', tech.spanish]));
+    }
+
+    if (cat === 'numbers' && tech.spanish.length <= 10 && !tech.spanish.includes(' ')) {
+      pool.push(kataEntry(['Tengo', tech.spanish, 'años']));
+      pool.push(kataEntry(['Hay', tech.spanish, 'libros']));
+    }
+
+    if (cat === 'body') {
+      pool.push(kataEntry(['Me', 'duele', 'la', tech.spanish]));
+      pool.push(kataEntry(['Toca', 'la', tech.spanish]));
+    }
+
+    if (cat === 'health') {
+      const w = splitIntoKataTiles(tech.spanish);
+      if (w.length >= 2) {
+        pool.push({ spanish: tech.spanish, words: shuffle([...w]) });
+      }
+    }
+
+    if (cat === 'school') {
+      const art = schoolIndefiniteArticle(tech.id);
+      pool.push(kataEntry(['Necesito', art, tech.spanish]));
+      pool.push(kataEntry(['En', 'la', 'clase', 'hay', art, tech.spanish]));
+    }
+
+    if (cat === 'introductions') {
+      const w = splitIntoKataTiles(tech.spanish);
+      if (w.length >= 2) {
+        pool.push({ spanish: tech.spanish, words: shuffle([...w]) });
+      }
+    }
+
+    if (cat === 'greetings' || cat === 'manners') {
+      const w = splitIntoKataTiles(tech.spanish);
+      if (w.length >= 2) {
+        pool.push({ spanish: tech.spanish, words: shuffle([...w]) });
+      }
+    }
+
+    if (cat === 'phrases') {
       const w = splitIntoKataTiles(tech.spanish);
       if (w.length >= 2) {
         pool.push({ spanish: tech.spanish, words: shuffle([...w]) });
@@ -269,7 +372,10 @@ function generateOne(
       };
 
     case 'speed': {
-      const four = pickDistinct(unitTechs, 4);
+      const fromUnit = pickDistinct(unitTechs, 2);
+      const rest = pool.filter((p) => !fromUnit.some((u) => u.id === p.id));
+      const fromPool = pickDistinct(rest, 2);
+      const four = shuffle([...fromUnit, ...fromPool]).slice(0, 4);
       if (four.length < 2) return null;
       return {
         id: nextId('speed'),
