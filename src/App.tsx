@@ -6,9 +6,15 @@ import WarriorsPath from './pages/WarriorsPath';
 import TrainingSession from './pages/TrainingSession';
 import BeltCeremony from './pages/BeltCeremony';
 
+function routerBasename(): string | undefined {
+  const raw = import.meta.env.BASE_URL
+  if (!raw || raw === '/') return undefined
+  return raw.replace(/\/$/, '') || undefined
+}
+
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename()}>
       <Routes>
         <Route path="/" element={<DojoEntrance />} />
         <Route path="/new-warrior" element={<NewWarrior />} />

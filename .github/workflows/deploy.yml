@@ -30,6 +30,8 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+        env:
+          VITE_PAGES_BASE: /el-camino-del-guerrero/
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

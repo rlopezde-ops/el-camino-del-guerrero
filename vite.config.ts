@@ -3,8 +3,12 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+/** e.g. /deazuadesign-portfolio/apps/spanish/ for portfolio; omit for local dev (/) */
+const rawBase = process.env.VITE_PAGES_BASE?.trim() || '/'
+const base = rawBase === '/' ? '/' : rawBase.endsWith('/') ? rawBase : `${rawBase}/`
+
 export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? '/el-camino-del-guerrero/' : '/',
+  base,
   plugins: [
     react(),
     tailwindcss(),

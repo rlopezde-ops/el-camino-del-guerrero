@@ -1,0 +1,68 @@
+# Save as: deazuadesign-portfolio/.github/workflows/deploy-github-pages.yml
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-deazuadesign-portfolio
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout portfolio
+        uses: actions/checkout@v4
+
+      - name: Checkout Spanish app
+        uses: actions/checkout@v4
+        with:
+          repository: rlopezde-ops/el-camino-del-guerrero
+          path: spanish-app
+          # Optional: set SPANISH_REPO_TOKEN on deazuadesign-portfolio if the Spanish repo is private
+          token: ${{ secrets.SPANISH_REPO_TOKEN || github.token }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: spanish-app/package-lock.json
+
+      - name: Build Spanish app (subpath /deazuadesign-portfolio/apps/spanish/)
+        working-directory: spanish-app
+        env:
+          VITE_PAGES_BASE: /deazuadesign-portfolio/apps/spanish/
+        run: npm ci && npm run build
+
+      - name: Assemble site (portfolio static + apps/spanish)
+        run: |
+          mkdir -p _site
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.cursor' \
+            --exclude='_site' \
+            --exclude='spanish-app' \
+            ./ _site/
+          mkdir -p _site/apps/spanish
+          cp -r spanish-app/dist/. _site/apps/spanish/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
