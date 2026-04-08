@@ -1,8 +1,8 @@
 # Save as: deazuadesign-portfolio/.github/workflows/deploy-github-pages.yml
 #
-# If el-camino-del-guerrero is PRIVATE: add repo secret SPANISH_REPO_TOKEN on THIS repo
-# (fine-grained PAT, Contents: Read on that repo only). Default GITHUB_TOKEN cannot read
-# other private repos — checkout returns "Not Found".
+# Uses `git clone` instead of actions/checkout for the Spanish repo so public
+# repos work even when the GitHub API token cannot read cross-repo metadata.
+# Private Spanish repo: set secret SPANISH_REPO_TOKEN (fine-grained PAT, read).
 name: Deploy GitHub Pages
 
 on:
@@ -29,18 +29,21 @@ jobs:
       - name: Checkout portfolio
         uses: actions/checkout@v4
 
-      - name: Checkout Spanish app
-        uses: actions/checkout@v4
-        with:
-          repository: rlopezde-ops/el-camino-del-guerrero
-          path: spanish-app
-          # Private Spanish repo: add secret SPANISH_REPO_TOKEN (PAT with read access).
-          # Public repo: leave secret unset — github.token works.
-          token: ${{ secrets.SPANISH_REPO_TOKEN || github.token }}
+      - name: Fetch Spanish app
+        env:
+          PAT: ${{ secrets.SPANISH_REPO_TOKEN }}
+        run: |
+          rm -rf spanish-app
+          if [ -n "$PAT" ]; then
+            git clone --depth 1 "https://x-access-token:${PAT}@github.com/rlopezde-ops/el-camino-del-guerrero.git" spanish-app
+          else
+            git clone --depth 1 https://github.com/rlopezde-ops/el-camino-del-guerrero.git spanish-app
+          fi
+          test -f spanish-app/package.json
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: spanish-app/package-lock.json
 
@@ -48,7 +51,10 @@ jobs:
         working-directory: spanish-app
         env:
           VITE_PAGES_BASE: /deazuadesign-portfolio/apps/spanish/
-        run: npm ci && npm run build
+        run: |
+          npm ci
+          npm run build
+          cp dist/index.html dist/404.html
 
       - name: Assemble site (portfolio static + apps/spanish)
         run: |
