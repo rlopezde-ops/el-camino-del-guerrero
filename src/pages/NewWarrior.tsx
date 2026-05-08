@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
-import WarriorAvatar, { SKIN_TONES, HAIR_COLORS, WARRIOR_FACE_EXPRESSIONS } from '../components/ui/WarriorAvatar';
+import WarriorAvatar, { SKIN_TONES, HAIR_COLORS } from '../components/ui/WarriorAvatar';
+import FacePicker from '../components/ui/FacePicker';
 import DojoButton from '../components/ui/DojoButton';
 import { getAgeGroup, type AgeGroup } from '../types';
 
@@ -193,20 +194,7 @@ export default function NewWarrior() {
               {/* Face */}
               <div className="w-full">
                 <p className="font-poppins text-base md:text-lg text-white/55 mb-3 text-center">Face</p>
-                <div className="flex gap-3 justify-center flex-wrap">
-                  {WARRIOR_FACE_EXPRESSIONS.map((face, i) => (
-                    <motion.button
-                      key={i}
-                      className={`w-14 h-14 md:w-16 md:h-16 rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-2xl cursor-pointer ${
-                        head === i ? 'bg-amber-400/20 border border-amber-400' : 'bg-white/10'
-                      }`}
-                      whileTap={{ scale: 0.85 }}
-                      onClick={() => setHead(i)}
-                    >
-                      {face}
-                    </motion.button>
-                  ))}
-                </div>
+                <FacePicker value={head} onChange={setHead} skinTone={skinTone} hair={hair} />
               </div>
 
               <div className="flex flex-wrap justify-center gap-4 mt-4">

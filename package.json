@@ -11,6 +11,8 @@
     "generate-audio": "bash scripts/generate-audio.sh"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.4.2",
+    "@dicebear/core": "^9.4.2",
     "@tailwindcss/vite": "^4.2.2",
     "@types/howler": "^2.2.12",
     "dexie": "^4.4.2",
