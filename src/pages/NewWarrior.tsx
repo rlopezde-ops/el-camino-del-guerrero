@@ -44,7 +44,7 @@ export default function NewWarrior() {
       placementCompleted: false,
     });
     setActiveProfile(profile);
-    navigate('/placement');
+    navigate('/how-it-works');
   }
 
   const slideVariants = {

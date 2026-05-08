@@ -27,11 +27,23 @@
   --color-coin-gold: #fbbf24;
 }
 
-html, body, #root {
+html, body {
   height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
+}
+
+#root {
+  height: 100%;
+  /* Fill the full screen including notch/Dynamic Island area,
+     but keep content clear of the home indicator at the bottom */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 body {
@@ -42,6 +54,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  /* Prevent iOS rubber-band overscroll */
+  overscroll-behavior: none;
+  /* Remove 300ms tap delay on touch devices */
+  touch-action: manipulation;
 }
 
 h1, h2, h3, h4, h5, h6 {

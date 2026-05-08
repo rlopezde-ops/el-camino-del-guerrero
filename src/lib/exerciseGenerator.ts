@@ -83,38 +83,38 @@ function blockForTech(tech: Technique): { prompt: string; correctAnswer: string 
   }
   if (category === 'family') {
     return {
-      prompt: `Mi ______ es muy simpático o simpática. (my relative is nice — pick the family word)`,
+      prompt: `Mi ______ es simpático o simpática. (Pick the Spanish for: ${english})`,
       correctAnswer: spanish,
     };
   }
   if (category === 'animals') {
     return {
-      prompt: `El ______ es grande.`,
+      prompt: `El ______ es grande. (Pick the Spanish for: ${english})`,
       correctAnswer: spanish,
     };
   }
   if (category === 'food') {
     return {
-      prompt: `Me gusta comer ______.`,
+      prompt: `Me gusta comer ______. (Pick the Spanish for: ${english})`,
       correctAnswer: spanish,
     };
   }
   if (category === 'body') {
     return {
-      prompt: `Me duele la ______.`,
+      prompt: `Me duele la ______. (Pick the Spanish for: ${english})`,
       correctAnswer: spanish,
     };
   }
   if (category === 'colors' || category === 'descriptions') {
     return {
-      prompt: `El gato es ______.`,
+      prompt: `El gato es ______. (Pick the Spanish for: ${english})`,
       correctAnswer: spanish,
     };
   }
   if (category === 'school') {
     const art = schoolIndefiniteArticle(tech.id);
     return {
-      prompt: `Necesito ${art} ______.`,
+      prompt: `Necesito ${art} ______. (Pick the Spanish for: ${english})`,
       correctAnswer: spanish,
     };
   }
@@ -443,13 +443,18 @@ const BOSS_EXERCISE_TYPES: ExerciseType[] = [
   'counter', 'counter', 'strike', 'block', 'sense', 'kiai',
 ];
 
+const BOSS_UNSUPPORTED_HANDCRAFT: ExerciseType[] = ['speed', 'mission'];
+
 /** Belt test: sample across all units in dojo (e.g. dojo1.units). */
 export function generateBeltTestExercises(
   units: UnitData[],
   techniquesPool: Technique[],
   count: number,
 ): Exercise[] {
-  const allHand = shuffle(units.flatMap((u) => u.exercises));
+  const handPool = units
+    .flatMap((u) => u.exercises)
+    .filter((e) => !BOSS_UNSUPPORTED_HANDCRAFT.includes(e.type));
+  const allHand = shuffle(handPool);
   const hTake = Math.min(4, allHand.length, Math.round(count * 0.25));
   const out: Exercise[] = [...allHand.slice(0, hTake)];
 
