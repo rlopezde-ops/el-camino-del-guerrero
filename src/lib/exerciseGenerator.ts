@@ -55,19 +55,28 @@ export function getTechniquesUpToUnit(allUnits: UnitData[], maxUnitId: number): 
   return allUnits.filter((u) => u.id <= maxUnitId).flatMap((u) => u.techniques);
 }
 
+/**
+ * Sort candidates so same-category items come first, making distractors more
+ * plausible (e.g. "what does hola mean?" gets other greetings as wrong options,
+ * not random words like "rabbit" or "knee").
+ */
+function sameCategoryFirst(tech: Technique, candidates: Technique[]): Technique[] {
+  const same = shuffle(candidates.filter((t) => t.category === tech.category));
+  const other = shuffle(candidates.filter((t) => t.category !== tech.category));
+  return [...same, ...other];
+}
+
 function englishOptions(tech: Technique, pool: Technique[], n: number): string[] {
-  const distractors = pickDistinct(
-    pool.filter((t) => t.id !== tech.id && t.english !== tech.english),
-    n - 1,
-  ).map((t) => t.english);
+  const candidates = pool.filter((t) => t.id !== tech.id && t.english !== tech.english);
+  const ordered = sameCategoryFirst(tech, candidates);
+  const distractors = ordered.slice(0, n - 1).map((t) => t.english);
   return shuffle([tech.english, ...distractors]).slice(0, n);
 }
 
 function spanishWordOptions(tech: Technique, pool: Technique[], n: number): string[] {
-  const distractors = pickDistinct(
-    pool.filter((t) => t.id !== tech.id && t.spanish !== tech.spanish),
-    n - 1,
-  ).map((t) => t.spanish);
+  const candidates = pool.filter((t) => t.id !== tech.id && t.spanish !== tech.spanish);
+  const ordered = sameCategoryFirst(tech, candidates);
+  const distractors = ordered.slice(0, n - 1).map((t) => t.spanish);
   return shuffle([tech.spanish, ...distractors]).slice(0, n);
 }
 
@@ -254,6 +263,54 @@ const EXERCISE_TYPES: ExerciseType[] = [
   'strike', 'counter', 'block', 'kata', 'sense', 'kiai', 'speed', 'mission',
 ];
 
+/**
+ * Return a weighted pool of exercise types tuned to the student's retake count.
+ *
+ * Retake 0 (first attempt) — recognition-balanced: lots of counter/strike so
+ *   new vocab feels accessible.
+ * Retake 1 — shift toward recall: more block/kata/kiai, less pure recognition.
+ * Retake 2+ — production-heavy: kata, kiai, mission and sense dominate so the
+ *   student has to actively produce the language, not just recognise it.
+ *
+ * Each entry in the returned array is one lottery ticket; `pick()` over it
+ * gives the desired probability distribution.
+ */
+function buildTypePool(retakeCount: number): ExerciseType[] {
+  if (retakeCount === 0) {
+    return [
+      'counter', 'counter', 'counter',
+      'strike',  'strike',  'strike',
+      'block',   'block',
+      'kata',    'kata',
+      'speed',
+      'sense',
+      'kiai',
+      'mission',
+    ];
+  }
+  if (retakeCount === 1) {
+    return [
+      'counter', 'counter',
+      'strike',
+      'block',   'block',  'block',
+      'kata',    'kata',   'kata',
+      'speed',
+      'sense',   'sense',
+      'kiai',    'kiai',
+      'mission',
+    ];
+  }
+  // Retake 2+
+  return [
+    'counter',
+    'block',  'block',  'block',
+    'kata',   'kata',   'kata',  'kata',
+    'sense',  'sense',  'sense',
+    'kiai',   'kiai',   'kiai',
+    'mission','mission',
+  ];
+}
+
 function generateOne(
   unit: UnitData,
   pool: Technique[],
@@ -410,11 +467,17 @@ function generateOne(
 
 /**
  * Mix ~30% hand-crafted unit.exercises with procedurally generated items.
+ *
+ * @param retakeCount  Number of times this unit has been completed before.
+ *   0 = first attempt (recognition-balanced mix).
+ *   1 = first retake (more recall/production).
+ *   2+ = repeated retakes (production-heavy).
  */
 export function generateSessionExercises(
   unit: UnitData,
   techniquesPool: Technique[],
   targetCount: number,
+  retakeCount = 0,
 ): Exercise[] {
   const handcrafted = shuffle([...unit.exercises]);
   const hTarget = Math.min(handcrafted.length, Math.max(1, Math.round(targetCount * 0.3)));
@@ -423,10 +486,11 @@ export function generateSessionExercises(
   out.push(...handcrafted.slice(0, hTarget));
 
   const pool = techniquesPool.length ? techniquesPool : unit.techniques;
+  const typePool = buildTypePool(retakeCount);
   let attempts = 0;
   while (out.length < targetCount && attempts < targetCount * 4) {
     attempts += 1;
-    const type = pick(EXERCISE_TYPES);
+    const type = pick(typePool);
     const ex = generateOne(unit, pool, type);
     if (ex) out.push(ex);
   }

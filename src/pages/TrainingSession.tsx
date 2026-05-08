@@ -28,6 +28,7 @@ import {
 import { speakSpanish, isTTSSupported } from '../lib/tts';
 import { shuffleArray } from '../lib/kataWords';
 import { db } from '../db';
+import { getWeakTechniques } from '../lib/spacedRepetition';
 
 export default function TrainingSession() {
   const { unitId } = useParams<{ unitId: string }>();
@@ -84,18 +85,47 @@ export default function TrainingSession() {
   useEffect(() => {
     const u = getUnitById(Number(unitId));
     if (!u || !activeProfile) return;
+
     resetSession();
-    const config = getSessionConfig(activeProfile.ageGroup);
-    const targetCount = Math.max(10, config.maxNewTechniques + 6);
-    const units = getDojo1Units();
-    const pool = getTechniquesUpToUnit(units, u.id);
-    const generated = generateSessionExercises(u, pool, targetCount);
-    setExercises(generated);
-    setCurrentIdx(0);
-    setSenseiText(getRandomPhrase('greeting', activeProfile.currentBelt).textEs);
-    setShowSensei(true);
-    const t = setTimeout(() => setShowSensei(false), 2500);
-    return () => clearTimeout(t);
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let cancelled = false;
+
+    (async () => {
+      const config = getSessionConfig(activeProfile.ageGroup);
+      const targetCount = Math.max(10, config.maxNewTechniques + 6);
+      const units = getDojo1Units();
+      let pool = getTechniquesUpToUnit(units, u.id);
+
+      // Count prior completions of this unit to drive the retake difficulty ramp
+      const retakeCount = await db.sessionResults
+        .where('profileId').equals(activeProfile.id!)
+        .filter((r) => r.unitId === u.id)
+        .count();
+
+      // On retakes, surface weak techniques more often by prepending them to the pool
+      if (retakeCount > 0) {
+        const weak = await getWeakTechniques(activeProfile.id!, 6);
+        const weakIds = new Set(weak.map((w) => w.techniqueId));
+        const weakTechs = pool.filter((t) => weakIds.has(t.id));
+        // Duplicate weak items so they're more likely to be picked
+        pool = [...weakTechs, ...weakTechs, ...pool];
+      }
+
+      if (cancelled) return;
+
+      const generated = generateSessionExercises(u, pool, targetCount, retakeCount);
+      setExercises(generated);
+      setCurrentIdx(0);
+      setSenseiText(getRandomPhrase('greeting', activeProfile.currentBelt).textEs);
+      setShowSensei(true);
+      timeoutId = setTimeout(() => setShowSensei(false), 2500);
+    })();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [unitId, activeProfile?.id, activeProfile?.ageGroup, resetSession]);
 
   const currentExercise = exercises[currentIdx];

@@ -9,6 +9,9 @@ const base = rawBase === '/' ? '/' : rawBase.endsWith('/') ? rawBase : `${rawBas
 
 export default defineConfig({
   base,
+  optimizeDeps: {
+    exclude: ['@mintplex-labs/piper-tts-web', '@xenova/transformers'],
+  },
   plugins: [
     react(),
     tailwindcss(),
