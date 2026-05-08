@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../stores/gameStore';
 import SpeechBubble from '../components/ui/SpeechBubble';
-import BeltRack from '../components/ui/BeltRack';
 import BeltBadge from '../components/ui/BeltBadge';
 import DojoButton from '../components/ui/DojoButton';
 import OptionCard from '../components/ui/OptionCard';
@@ -89,7 +88,7 @@ const TRIAL_DEFINITIONS: TrialDef[] = [
   },
 ];
 
-function buildTrialsFromDefinitions(): { belt: BeltColor; label: string; questions: TrialQuestion[] }[] {
+function buildTrials() {
   return TRIAL_DEFINITIONS.map((d) => ({
     belt: d.belt,
     label: d.label,
@@ -103,7 +102,7 @@ export default function PlacementQuiz() {
   const navigate = useNavigate();
   const { activeProfile, updateProfile, setActiveProfile } = useGameStore();
 
-  const trials = useMemo(() => buildTrialsFromDefinitions(), []);
+  const trials = useMemo(() => buildTrials(), []);
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [trialIdx, setTrialIdx] = useState(0);
@@ -117,7 +116,7 @@ export default function PlacementQuiz() {
 
   const currentTrial = trials[trialIdx];
   const currentQuestion = currentTrial?.questions[questionIdx];
-  const requiredCorrect = Math.ceil(currentTrial?.questions.length * 0.66);
+  const requiredCorrect = Math.ceil((currentTrial?.questions.length ?? 0) * 0.66);
 
   const handleAnswer = useCallback((answer: string) => {
     if (selectedAnswer) return;
@@ -146,18 +145,14 @@ export default function PlacementQuiz() {
         setAnswerCorrect(null);
       }
     }, 800);
-  }, [selectedAnswer, currentQuestion, questionIdx, trialCorrect, currentTrial, requiredCorrect, trials]);
+  }, [selectedAnswer, currentQuestion, questionIdx, trialCorrect, currentTrial, requiredCorrect]);
 
   function awardBelt() {
     const belt = currentTrial.belt;
-    const newEarned = [...earnedBelts, belt];
-    setEarnedBelts(newEarned);
+    setEarnedBelts((prev) => [...prev, belt]);
     setShowConfetti(true);
     setPhase('beltUp');
-
-    const bonusCoins = (trialIdx + 1) * 50;
-    setTotalCoins((c) => c + bonusCoins);
-
+    setTotalCoins((c) => c + (trialIdx + 1) * 50);
     setTimeout(() => setShowConfetti(false), 3000);
   }
 
@@ -184,14 +179,11 @@ export default function PlacementQuiz() {
       : 'white';
 
     const BELT_UNIT_MAP: Record<string, number> = {
-      white: 3,
-      yellow: 5,
-      orange: 7,
-      green: 8,
+      white: 3, yellow: 5, orange: 7, green: 8,
     };
 
     const unitStart = earnedBelts.length > 0
-      ? BELT_UNIT_MAP[highestBelt] ?? 1
+      ? (BELT_UNIT_MAP[highestBelt] ?? 1)
       : 1;
 
     const dojo1Belts: BeltColor[] = ['white', 'yellow', 'orange', 'green'];
@@ -205,20 +197,13 @@ export default function PlacementQuiz() {
     }
 
     const pid = activeProfile.id;
-    const units = getDojo1Units();
-    for (const u of units) {
+    for (const u of getDojo1Units()) {
       if (u.id < unitStart) {
         await db.sessionResults.add({
-          profileId: pid,
-          unitId: u.id,
-          completedAt: new Date(),
-          kiEarned: 0,
-          coinsEarned: 0,
-          accuracy: 0.85,
-          exercisesCompleted: 10,
-          comboMax: 3,
-          newTechniquesLearned: u.techniques.length,
-          techniquesReviewed: 10,
+          profileId: pid, unitId: u.id, completedAt: new Date(),
+          kiEarned: 0, coinsEarned: 0, accuracy: 0.85,
+          exercisesCompleted: 10, comboMax: 3,
+          newTechniquesLearned: u.techniques.length, techniquesReviewed: 10,
         });
       }
     }
@@ -236,11 +221,88 @@ export default function PlacementQuiz() {
     setActiveProfile({ ...activeProfile, ...updates });
   }
 
+  const beltColor = currentTrial ? BELT_CSS_COLORS[currentTrial.belt] : '#f59e0b';
+
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-dojo-dark via-dojo-navy to-dojo-dark overflow-auto">
-      <VoxelConfetti active={showConfetti} color={currentTrial ? BELT_CSS_COLORS[currentTrial.belt] : undefined} />
+      <VoxelConfetti active={showConfetti} color={beltColor} />
 
+      {/* ── Belt-up ceremony — full-screen overlay ───────────────────────── */}
+      <AnimatePresence>
+        {phase === 'beltUp' && (
+          <motion.div
+            key="belt-ceremony"
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6"
+            style={{ backgroundColor: 'rgba(0,0,0,0.93)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            {/* Radial glow in belt color */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                width: 480,
+                height: 480,
+                borderRadius: '50%',
+                background: `radial-gradient(circle, ${beltColor}28 0%, transparent 65%)`,
+              }}
+              aria-hidden
+            />
+
+            <motion.div
+              className="flex flex-col items-center gap-5 relative z-10"
+              initial={{ y: 60, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+            >
+              {/* Belt badge — bigger than normal */}
+              <motion.div
+                animate={{ scale: [1, 1.12, 1, 1.06, 1] }}
+                transition={{ delay: 0.2, duration: 0.7, ease: 'easeOut' }}
+              >
+                <BeltBadge belt={currentTrial.belt} size="lg" showLabel={false} />
+              </motion.div>
+
+              {/* Belt name */}
+              <motion.h2
+                className="font-baloo font-extrabold text-center leading-none"
+                style={{ fontSize: 'clamp(2.2rem, 8vw, 3.5rem)', color: beltColor }}
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.15, type: 'spring', stiffness: 280, damping: 18 }}
+              >
+                {BELT_DISPLAY_NAMES[currentTrial.belt]}
+              </motion.h2>
+
+              <motion.p
+                className="font-poppins text-lg md:text-xl text-white/55 text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                {earnedBelts.length} belt{earnedBelts.length > 1 ? 's' : ''} earned · {earnedBelts.length * 2} stripes skipped
+              </motion.p>
+
+              {/* Continue — appears after a beat so the moment lands first */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.4, duration: 0.35 }}
+              >
+                <DojoButton size="lg" onClick={nextTrialOrFinish}>
+                  {trialIdx + 1 < trials.length ? 'Next Trial →' : 'See Results'}
+                </DojoButton>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Main phases ──────────────────────────────────────────────────── */}
       <AnimatePresence mode="wait">
+
         {/* Intro */}
         {phase === 'intro' && (
           <motion.div
@@ -250,138 +312,135 @@ export default function PlacementQuiz() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="h-4 w-28 mx-auto rounded-full bg-amber-400/35" aria-hidden />
+            <div className="h-1 w-20 mx-auto rounded-full bg-amber-400/40" aria-hidden />
             <h1 className="font-baloo text-4xl md:text-5xl font-extrabold text-amber-400 text-center px-2">
               La Prueba del Guerrero
             </h1>
-            <SpeechBubble
-              text="Welcome to the Dojo, warrior. Show me what you already know. Every belt you earn is one you've mastered. ¡Hajime!"
-            />
+            <SpeechBubble text="Welcome to the Dojo, warrior. Show me what you already know. Every belt you earn is one you've mastered. ¡Hajime!" />
             <DojoButton size="lg" onClick={() => setPhase('trial')}>
               Begin Trial!
             </DojoButton>
           </motion.div>
         )}
 
-        {/* Trial Questions */}
+        {/* Trial */}
         {phase === 'trial' && currentQuestion && (
           <motion.div
             key={`trial-${trialIdx}-${questionIdx}`}
-            className="flex-1 flex flex-col px-5 md:px-8 pt-6"
-            initial={{ x: 30, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -30, opacity: 0 }}
+            className="flex-1 flex flex-col"
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
           >
-            <div className="flex items-start gap-4 mb-6">
-              <BeltRack
-                currentBelt={currentTrial.belt}
-                earnedBelts={earnedBelts}
-                orientation="vertical"
-                className="hidden sm:flex"
-              />
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-baloo text-xl md:text-2xl font-bold" style={{ color: BELT_CSS_COLORS[currentTrial.belt] }}>
-                    {currentTrial.label}
-                  </span>
-                  <span className="font-pixel text-sm md:text-base text-white/45">
-                    {questionIdx + 1}/{currentTrial.questions.length}
-                  </span>
-                </div>
+            {/* Progress header */}
+            <div className="px-5 md:px-8 pt-6 pb-4">
+              <div className="flex items-center justify-between mb-3">
+                <span
+                  className="font-baloo font-bold text-xl md:text-2xl"
+                  style={{ color: beltColor }}
+                >
+                  {currentTrial.label}
+                </span>
+                <span className="font-pixel text-sm text-white/40">
+                  {questionIdx + 1} / {currentTrial.questions.length}
+                </span>
+              </div>
+              {/* Segmented progress bar */}
+              <div className="flex gap-1.5">
+                {currentTrial.questions.map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="h-2 flex-1 rounded-full"
+                    style={{
+                      backgroundColor:
+                        i < questionIdx
+                          ? beltColor
+                          : i === questionIdx
+                          ? `${beltColor}88`
+                          : 'rgba(255,255,255,0.08)',
+                    }}
+                    animate={i === questionIdx ? { opacity: [0.5, 1, 0.5] } : undefined}
+                    transition={i === questionIdx ? { repeat: Infinity, duration: 1.2 } : undefined}
+                  />
+                ))}
+              </div>
+            </div>
 
-                <h2 className="font-baloo text-3xl md:text-4xl font-extrabold text-white mb-6 leading-tight">
-                  {currentQuestion.prompt}
-                </h2>
+            {/* Question + options */}
+            <div className="flex-1 px-5 md:px-8 pb-8">
+              <motion.h2
+                key={questionIdx}
+                className="font-baloo text-3xl md:text-4xl font-extrabold text-white mb-6 leading-tight"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {currentQuestion.prompt}
+              </motion.h2>
 
-                <div className="flex flex-col gap-4">
-                  {currentQuestion.options.map((opt) => (
-                    <OptionCard
-                      key={opt}
-                      text={opt}
-                      selected={selectedAnswer === opt}
-                      correct={
-                        selectedAnswer
-                          ? opt === currentQuestion.correctAnswer
-                            ? true
-                            : selectedAnswer === opt
-                              ? false
-                              : null
+              <div className="flex flex-col gap-3 md:gap-4 max-w-xl">
+                {currentQuestion.options.map((opt) => (
+                  <OptionCard
+                    key={opt}
+                    text={opt}
+                    selected={selectedAnswer === opt}
+                    correct={
+                      selectedAnswer
+                        ? opt === currentQuestion.correctAnswer
+                          ? true
+                          : selectedAnswer === opt
+                          ? false
                           : null
-                      }
-                      disabled={selectedAnswer !== null}
-                      beltColor={BELT_CSS_COLORS[currentTrial.belt]}
-                      onClick={() => handleAnswer(opt)}
-                    />
-                  ))}
-                </div>
+                        : null
+                    }
+                    disabled={selectedAnswer !== null}
+                    beltColor={beltColor}
+                    onClick={() => handleAnswer(opt)}
+                  />
+                ))}
               </div>
             </div>
           </motion.div>
         )}
 
-        {/* Belt-Up Ceremony */}
-        {phase === 'beltUp' && (
-          <motion.div
-            key="beltup"
-            className="flex-1 flex flex-col items-center justify-center px-6 gap-4"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ repeat: 2, duration: 0.4 }}
-            >
-              <BeltBadge belt={currentTrial.belt} size="lg" showLabel />
-            </motion.div>
-            <h2 className="font-baloo text-4xl md:text-5xl font-extrabold text-center px-2" style={{ color: BELT_CSS_COLORS[currentTrial.belt] }}>
-              {BELT_DISPLAY_NAMES[currentTrial.belt]} Earned!
-            </h2>
-            <p className="font-poppins text-lg md:text-xl text-white/65 text-center max-w-md px-2">
-              {earnedBelts.length} belt{earnedBelts.length > 1 ? 's' : ''} earned! You've bypassed {earnedBelts.length * 2} stripes!
-            </p>
-            <DojoButton size="lg" onClick={nextTrialOrFinish}>
-              {trialIdx + 1 < trials.length ? 'Next Trial →' : 'See Results'}
-            </DojoButton>
-          </motion.div>
-        )}
-
-        {/* Placement Result */}
+        {/* Result */}
         {phase === 'result' && (
           <motion.div
             key="result"
-            className="flex-1 flex flex-col items-center justify-center px-6 gap-4"
-            initial={{ opacity: 0, y: 20 }}
+            className="flex-1 flex flex-col items-center justify-center px-6 gap-5"
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
           >
-            <div className="h-4 w-32 mx-auto rounded-full bg-amber-400/35" aria-hidden />
+            <div className="h-1 w-24 mx-auto rounded-full bg-amber-400/35" aria-hidden />
             <h1 className="font-baloo text-4xl md:text-5xl font-extrabold text-amber-400 text-center px-2">
               {earnedBelts.length === 0
                 ? 'Welcome to the Dojo!'
                 : earnedBelts.length >= 4
-                  ? '¡Increíble, guerrero!'
-                  : `${BELT_DISPLAY_NAMES[earnedBelts[earnedBelts.length - 1]]} Earned!`}
+                ? '¡Increíble, guerrero!'
+                : `${BELT_DISPLAY_NAMES[earnedBelts[earnedBelts.length - 1]]} Earned!`}
             </h1>
-            <p className="font-poppins text-lg md:text-xl text-white/65 text-center max-w-md px-4">
+            <p className="font-poppins text-lg md:text-xl text-white/55 text-center max-w-md px-2">
               {earnedBelts.length === 0
                 ? 'Every master was once a beginner. Sensei will guide you from the start.'
                 : `You conquered ${earnedBelts.length} trial${earnedBelts.length > 1 ? 's' : ''}! Your training begins at a higher rank.`}
             </p>
 
-            <div className="flex gap-4 mt-2">
-              <div className="flex items-center gap-2 bg-white/10 px-4 py-3 rounded-xl min-h-[52px]">
-                <span className="font-poppins text-xs font-semibold uppercase tracking-wide text-white/50">Coins</span>
+            <div className="flex gap-4 mt-1">
+              <div className="flex items-center gap-2 bg-white/10 px-4 py-3 rounded-xl">
+                <span className="font-poppins text-xs font-semibold uppercase tracking-wide text-white/45">Coins</span>
                 <span className="font-pixel text-base md:text-lg text-coin-gold">{totalCoins}</span>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 justify-center mt-2">
-              {earnedBelts.map((b) => (
-                <BeltBadge key={b} belt={b} size="md" earned />
-              ))}
-            </div>
+            {earnedBelts.length > 0 && (
+              <div className="flex flex-wrap gap-2 justify-center">
+                {earnedBelts.map((b) => <BeltBadge key={b} belt={b} size="md" earned />)}
+              </div>
+            )}
 
-            <DojoButton size="lg" onClick={() => navigate('/path')} className="mt-4">
+            <DojoButton size="lg" onClick={() => navigate('/path')} className="mt-2">
               Enter the Warrior's Path →
             </DojoButton>
           </motion.div>

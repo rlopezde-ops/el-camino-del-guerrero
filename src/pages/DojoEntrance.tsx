@@ -6,7 +6,11 @@ import WarriorAvatar from '../components/ui/WarriorAvatar';
 import DojoButton from '../components/ui/DojoButton';
 import BeltBadge from '../components/ui/BeltBadge';
 import type { WarriorProfile } from '../types';
+import { BELT_ORDER, BELT_CSS_COLORS } from '../types';
 import { primeTTS } from '../lib/tts';
+
+// Main belt colors — skip the extra black-belt dans for the preview strip
+const BELT_PREVIEW = BELT_ORDER.filter((b) => !b.startsWith('black') || b === 'black-1');
 
 export default function DojoEntrance() {
   const navigate = useNavigate();
@@ -41,42 +45,124 @@ export default function DojoEntrance() {
     );
   }
 
+  // ─── HERO — first-time visitor ────────────────────────────────────────────
+
+  if (profiles.length === 0) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center bg-gradient-to-b from-dojo-dark via-dojo-navy to-dojo-dark px-6 overflow-auto">
+
+        {/* Radial glow — subtle gold warmth behind the title */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            width: '90vw',
+            maxWidth: 640,
+            height: 420,
+            top: '40%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'radial-gradient(ellipse at center, rgba(245,158,11,0.13) 0%, transparent 68%)',
+          }}
+          aria-hidden
+        />
+
+        {/* Title */}
+        <motion.div
+          className="text-center relative z-10"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+        >
+          <div className="h-1 w-16 mx-auto mb-7 rounded-full bg-amber-400/50" aria-hidden />
+          <h1 className="font-baloo text-5xl md:text-6xl lg:text-7xl font-extrabold text-amber-400 leading-none">
+            El Camino
+          </h1>
+          <p className="font-baloo text-2xl md:text-3xl font-bold text-white/65 mt-1 tracking-wide">
+            del Guerrero
+          </p>
+          <p className="font-poppins text-white/45 text-base md:text-lg mt-5 leading-relaxed">
+            Earn your belts.&nbsp;&nbsp;Learn Spanish.&nbsp;&nbsp;Train like a warrior.
+          </p>
+        </motion.div>
+
+        {/* Belt progression strip */}
+        <motion.div
+          className="flex items-center justify-center mt-10 mb-10 relative z-10"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.4 }}
+        >
+          {BELT_PREVIEW.map((belt, i) => (
+            <div key={belt} className="flex items-center">
+              <motion.div
+                style={{
+                  width: 28,
+                  height: 10,
+                  borderRadius: 3,
+                  backgroundColor: BELT_CSS_COLORS[belt],
+                  border: belt === 'white' ? '1px solid rgba(255,255,255,0.2)' : undefined,
+                  boxShadow: `0 0 6px ${BELT_CSS_COLORS[belt]}44`,
+                }}
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={{ scaleX: 1, opacity: 1 }}
+                transition={{ delay: 0.3 + i * 0.05, duration: 0.2 }}
+              />
+              {i < BELT_PREVIEW.length - 1 && (
+                <div style={{ width: 7, height: 1, backgroundColor: 'rgba(255,255,255,0.10)' }} />
+              )}
+            </div>
+          ))}
+        </motion.div>
+
+        {/* CTA */}
+        <motion.div
+          className="relative z-10"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.35 }}
+        >
+          <DojoButton size="lg" onClick={() => navigate('/new-warrior')}>
+            Start Training →
+          </DojoButton>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ─── RETURNING USER — warrior selection ───────────────────────────────────
+
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-dojo-dark via-dojo-navy to-dojo-dark overflow-auto">
-      {/* Dojo gate header */}
-      <motion.div
-        className="text-center pt-10 pb-6 px-4"
-        initial={{ y: -30, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-      >
-        <div className="h-3 w-24 mx-auto mb-6 rounded-full bg-amber-400/40" aria-hidden />
-        <h1 className="font-baloo text-4xl md:text-5xl lg:text-6xl font-extrabold text-amber-400 drop-shadow-lg px-2">
-          El Camino del Guerrero
-        </h1>
-        <p className="font-poppins text-white/55 text-lg md:text-xl mt-2">Choose your warrior</p>
-      </motion.div>
 
-      {/* Cherry blossom petals (decorative) */}
-      <div className="absolute top-0 left-0 right-0 pointer-events-none overflow-hidden h-40 opacity-30">
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-3 h-3 rounded-full bg-pink-300"
-            style={{ left: `${10 + i * 12}%` }}
-            animate={{
-              y: [0, 160],
-              x: [0, Math.sin(i) * 30],
-              rotate: [0, 360],
-              opacity: [0.8, 0],
-            }}
-            transition={{
-              repeat: Infinity,
-              duration: 4 + i * 0.5,
-              delay: i * 0.8,
-              ease: 'easeIn',
-            }}
-          />
-        ))}
+      {/* Header with radial glow */}
+      <div className="relative text-center pt-10 pb-6 px-4">
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            width: '70vw',
+            maxWidth: 480,
+            height: 180,
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'radial-gradient(ellipse at center, rgba(245,158,11,0.09) 0%, transparent 70%)',
+          }}
+          aria-hidden
+        />
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="relative z-10"
+        >
+          <div className="h-1 w-16 mx-auto mb-5 rounded-full bg-amber-400/40" aria-hidden />
+          <h1 className="font-baloo text-4xl md:text-5xl lg:text-6xl font-extrabold text-amber-400">
+            El Camino del Guerrero
+          </h1>
+          <p className="font-poppins text-white/40 text-base md:text-lg mt-2">
+            Choose your warrior
+          </p>
+        </motion.div>
       </div>
 
       {/* Warrior grid */}
@@ -90,7 +176,7 @@ export default function DojoEntrance() {
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0, opacity: 0 }}
-                transition={{ delay: idx * 0.1, type: 'spring' }}
+                transition={{ delay: idx * 0.08, type: 'spring', stiffness: 300, damping: 24 }}
                 onClick={() => handleSelect(profile)}
               >
                 <WarriorAvatar
@@ -104,12 +190,11 @@ export default function DojoEntrance() {
                   {profile.name}
                 </span>
                 <BeltBadge belt={profile.currentBelt} size="md" />
-                <div className="flex items-center gap-1.5 text-sm md:text-base text-white/45">
+                <div className="flex items-center gap-1.5 text-white/45">
                   <span className="font-poppins text-xs uppercase tracking-wide text-white/35">Streak</span>
                   <span className="font-pixel text-sm">{profile.streakDays}</span>
                 </div>
 
-                {/* Edit / Delete action row */}
                 <div className="flex gap-2 mt-1">
                   <button
                     type="button"
@@ -127,7 +212,6 @@ export default function DojoEntrance() {
                   </button>
                 </div>
 
-                {/* Delete confirmation overlay */}
                 {confirmDelete === profile.id && (
                   <motion.div
                     className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 p-4 bg-black/90"
@@ -141,21 +225,11 @@ export default function DojoEntrance() {
                     <p className="font-poppins text-sm text-white/50 text-center px-1">
                       All progress will be lost.
                     </p>
-                    <div className="flex flex-col gap-3 w-full max-w-full min-w-0 mt-1">
-                      <DojoButton
-                        size="md"
-                        variant="danger"
-                        className="w-full max-w-full shrink-0"
-                        onClick={() => handleDelete(profile.id!)}
-                      >
+                    <div className="flex flex-col gap-3 w-full mt-1">
+                      <DojoButton size="md" variant="danger" className="w-full" onClick={() => handleDelete(profile.id!)}>
                         Delete
                       </DojoButton>
-                      <DojoButton
-                        size="md"
-                        variant="ghost"
-                        className="w-full max-w-full shrink-0 !bg-white/10 hover:!bg-white/15"
-                        onClick={() => setConfirmDelete(null)}
-                      >
+                      <DojoButton size="md" variant="ghost" className="w-full !bg-white/10 hover:!bg-white/15" onClick={() => setConfirmDelete(null)}>
                         Cancel
                       </DojoButton>
                     </div>
@@ -165,7 +239,6 @@ export default function DojoEntrance() {
             ))}
           </AnimatePresence>
 
-          {/* New Warrior button */}
           {profiles.length < 6 && (
             <motion.div
               className="bg-white/5 rounded-2xl md:rounded-3xl p-5 border-2 border-dashed border-white/20 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-white/10 hover:border-amber-400/50 transition-all min-h-[180px] md:min-h-[200px]"
@@ -173,7 +246,7 @@ export default function DojoEntrance() {
               onClick={() => navigate('/new-warrior')}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: profiles.length * 0.1 + 0.1 }}
+              transition={{ delay: profiles.length * 0.08 + 0.1, type: 'spring', stiffness: 300, damping: 24 }}
             >
               <div className="w-16 h-16 rounded-full bg-amber-400/20 flex items-center justify-center">
                 <span className="text-4xl text-amber-400">+</span>
