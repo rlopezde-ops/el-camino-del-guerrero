@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 /** e.g. /deazuadesign-portfolio/apps/spanish/ for portfolio; omit for local dev (/) */
 const rawBase = process.env.VITE_PAGES_BASE?.trim() || '/'
@@ -12,9 +13,30 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['@mintplex-labs/piper-tts-web', '@xenova/transformers'],
   },
+  server: {
+    headers: {
+      // Required for SharedArrayBuffer (ONNX Runtime Web WASM threading)
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
+    },
+  },
+  build: {
+    // Never inline WASM files as base64 — they must be fetched from a URL
+    assetsInlineLimit: 0,
+  },
   plugins: [
     react(),
     tailwindcss(),
+    // Copy onnxruntime-web WASM files to public/ort-wasm/ so piper-tts-web
+    // can load them locally (no CDN required, works offline in PWA mode)
+    viteStaticCopy({
+      targets: [
+        {
+          src: 'node_modules/onnxruntime-web/dist/*.wasm',
+          dest: 'ort-wasm',
+        },
+      ],
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'audio/**/*'],

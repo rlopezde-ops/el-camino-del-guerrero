@@ -23,6 +23,7 @@ import {
   listenForSpanish,
   scorePronunciation,
   isSpeechRecognitionSupported,
+  isNativeSpeechAvailable,
   normalizeSpanishPhrase,
 } from '../lib/speechRecognition';
 import { speakSpanish, isTTSSupported } from '../lib/tts';
@@ -761,6 +762,25 @@ export default function TrainingSession() {
               ? 'Toca el micrófono y di la frase. Necesitas una pronunciación clara para continuar.'
               : 'Este navegador no puede comprobar tu voz. Practica en voz alta y usa Omitir.'}
         </p>
+
+        {/* Browser nudge — shown only when native speech recognition isn't available */}
+        {!isNativeSpeechAvailable() && isSpeechRecognitionSupported() && (
+          <motion.div
+            className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-amber-400/10 border border-amber-400/30 max-w-sm text-left"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <span className="text-amber-400 text-lg shrink-0 mt-0.5">💡</span>
+            <p className="font-poppins text-sm text-amber-200/80 leading-snug">
+              For the best speech recognition, open this app in{' '}
+              <span className="text-amber-300 font-semibold">Chrome</span> or{' '}
+              <span className="text-amber-300 font-semibold">Safari</span>.
+              Your current browser uses a slower voice model.
+            </p>
+          </motion.div>
+        )}
+
         <DojoButton variant="ghost" size="md" onClick={handleKiaiSkip} disabled={kiaiLocked}>
           Omitir (cuenta como incorrecto) →
         </DojoButton>
